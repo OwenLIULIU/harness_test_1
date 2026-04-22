@@ -1,0 +1,8 @@
+AI Autonomy: Notes
+==================
+
+"Autonomy" in AI systems usually means the ability to select actions, use tools, and complete multi-step work within defined goals and safety boundaries—without a human choosing every step.
+
+Practical autonomy depends on: clear instructions, reliable feedback (tests, users, or environments), and limits that prevent harm or unauthorized changes. The strongest setups pair autonomy with accountability: humans can review outcomes, and systems can be interrupted or reverted when something drifts off course.
+
+This file is a small harness note for thinking about what autonomy should mean in a given project, not a claim that any system is fully independent.
