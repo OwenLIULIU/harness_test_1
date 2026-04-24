@@ -1,4 +1,4 @@
-from flask import Flask, jsonify
+from flask import Flask, jsonify, request
 import os
 import time
 
@@ -23,6 +23,20 @@ def version():
         "env": "local-factory",
         "up_since": START_TIME
     })
+
+@app.route('/cal')
+def cal():
+    """Return a + b + 1 for query parameters a and b."""
+    a_raw = request.args.get("a")
+    b_raw = request.args.get("b")
+    if a_raw is None or b_raw is None:
+        return jsonify({"error": "missing required query parameters: a, b"}), 400
+    try:
+        a = float(a_raw)
+        b = float(b_raw)
+    except ValueError:
+        return jsonify({"error": "a and b must be valid numbers"}), 400
+    return jsonify({"a": a, "b": b, "result": a + b + 1})
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=8090)
