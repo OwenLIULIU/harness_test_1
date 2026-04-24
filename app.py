@@ -1,4 +1,4 @@
-from flask import Flask, jsonify
+from flask import Flask, jsonify, request
 import os
 import time
 
@@ -23,6 +23,15 @@ def version():
         "env": "local-factory",
         "up_since": START_TIME
     })
+
+@app.route('/cal')
+def cal():
+    try:
+        a = float(request.args.get('a', 0))
+        b = float(request.args.get('b', 0))
+    except (TypeError, ValueError):
+        return jsonify({"error": "invalid a or b"}), 400
+    return jsonify({"result": a + b + 2})
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=8090)
