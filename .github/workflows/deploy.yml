@@ -1,0 +1,81 @@
+name: Deploy
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  # -------------------------------------------------------
+  # Mode 1: Local deployment via Self-Hosted Runner
+  # Activated when DEPLOY_MODE is 'local' or not set
+  # -------------------------------------------------------
+  deploy-local:
+    if: ${{ vars.DEPLOY_MODE == 'local' || vars.DEPLOY_MODE == '' }}
+    runs-on: self-hosted
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build and Deploy
+        run: |
+          if [ -f "docker-compose.yml" ] || [ -f "docker-compose.yaml" ] || [ -f "compose.yml" ]; then
+            docker compose up -d --build
+          elif [ -f "Dockerfile" ]; then
+            REPO_NAME=$(basename $(pwd))
+            docker build -t "$REPO_NAME:latest" .
+            docker stop "$REPO_NAME" 2>/dev/null || true
+            docker rm "$REPO_NAME" 2>/dev/null || true
+            docker run -d --name "$REPO_NAME" -p ${APP_PORT:-8090}:${APP_PORT:-8090} "$REPO_NAME:latest"
+          else
+            echo "No Dockerfile or docker-compose found. Skipping container deployment."
+          fi
+
+      - name: Health Check
+        run: |
+          echo "Waiting 15s for service to start..."
+          sleep 15
+          if command -v curl &> /dev/null; then
+            curl -sf http://localhost:${APP_PORT:-8090}/health && echo "Health check passed!" || echo "Warning: Health check endpoint not available"
+          fi
+
+      - name: Version Verification
+        run: |
+          EXPECTED_SHA="${{ github.sha }}"
+          DEPLOYED=$(curl -sf http://localhost:${APP_PORT:-8090}/version 2>/dev/null | grep -o '"commit":"[^"]*"' | cut -d'"' -f4 || echo "unknown")
+          if [ "$DEPLOYED" = "$EXPECTED_SHA" ]; then
+            echo "✅ Version verified: $DEPLOYED"
+          else
+            echo "⚠️ Version mismatch: expected=$EXPECTED_SHA deployed=$DEPLOYED"
+          fi
+
+  # -------------------------------------------------------
+  # Mode 2: Remote deployment via SSH
+  # Activated when DEPLOY_MODE is 'remote'
+  # -------------------------------------------------------
+  deploy-remote:
+    if: ${{ vars.DEPLOY_MODE == 'remote' }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Deploy via SSH
+        uses: appleboy/ssh-action@v1
+        with:
+          host: ${{ secrets.DEPLOY_HOST }}
+          username: ${{ secrets.DEPLOY_USER }}
+          key: ${{ secrets.DEPLOY_KEY }}
+          port: ${{ secrets.DEPLOY_PORT || 22 }}
+          script: |
+            cd ${{ vars.DEPLOY_PATH }}
+            git pull origin main
+            if [ -f "docker-compose.yml" ] || [ -f "docker-compose.yaml" ] || [ -f "compose.yml" ]; then
+              docker compose up -d --build
+            elif [ -f "Dockerfile" ]; then
+              REPO_NAME=$(basename $(pwd))
+              docker build -t "$REPO_NAME:latest" .
+              docker stop "$REPO_NAME" 2>/dev/null || true
+              docker rm "$REPO_NAME" 2>/dev/null || true
+              docker run -d --name "$REPO_NAME" -p ${APP_PORT:-8090}:${APP_PORT:-8090} "$REPO_NAME:latest"
+            fi
+
+      - name: Remote Health Check
+        run: |
+          sleep 15
+          curl -sf http://${{ secrets.DEPLOY_HOST }}:${APP_PORT:-8090}/health && echo "Remote deployment healthy!" || echo "Warning: Remote health check failed"

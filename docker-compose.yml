@@ -1,0 +1,8 @@
+services:
+  web:
+    build: .
+    ports:
+      - "8090:8090"
+    environment:
+      - COMMIT_SHA=${GITHUB_SHA:-local-dev}
+    restart: unless-stopped
