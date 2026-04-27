@@ -1,6 +1,17 @@
 from flask import Flask, jsonify, request
 import os
 import time
+import sentry_sdk
+from sentry_sdk.integrations.flask import FlaskIntegration
+
+sentry_dsn = os.environ.get("SENTRY_DSN")
+if sentry_dsn:
+    sentry_sdk.init(
+        dsn=sentry_dsn,
+        integrations=[FlaskIntegration()],
+        traces_sample_rate=1.0,
+        profiles_sample_rate=1.0,
+    )
 
 app = Flask(__name__)
 
@@ -37,6 +48,12 @@ def version():
         "env": "local-factory",
         "up_since": START_TIME
     })
+
+@app.route('/crash')
+def crash():
+    """Trigger a division by zero to test Sentry exception tracking."""
+    1 / 0
+    return "This should not be reached"
 
 @app.route("/v1/cal")
 def cal_v1():
