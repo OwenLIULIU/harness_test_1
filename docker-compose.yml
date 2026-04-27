@@ -5,4 +5,5 @@ services:
       - "8090:8090"
     environment:
       - COMMIT_SHA=${GITHUB_SHA:-local-dev}
+      - SENTRY_DSN=${SENTRY_DSN}
     restart: unless-stopped
