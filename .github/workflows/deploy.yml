@@ -18,7 +18,7 @@ jobs:
       - name: Build and Deploy
         run: |
           if [ -f "docker-compose.yml" ] || [ -f "docker-compose.yaml" ] || [ -f "compose.yml" ]; then
-            docker compose up -d --build
+            SENTRY_DSN="${{ secrets.SENTRY_DSN }}" docker compose up -d --build
           elif [ -f "Dockerfile" ]; then
             REPO_NAME=$(basename $(pwd))
             docker build -t "$REPO_NAME:latest" .
@@ -66,7 +66,7 @@ jobs:
             cd ${{ vars.DEPLOY_PATH }}
             git pull origin main
             if [ -f "docker-compose.yml" ] || [ -f "docker-compose.yaml" ] || [ -f "compose.yml" ]; then
-              docker compose up -d --build
+              SENTRY_DSN="${{ secrets.SENTRY_DSN }}" docker compose up -d --build
             elif [ -f "Dockerfile" ]; then
               REPO_NAME=$(basename $(pwd))
               docker build -t "$REPO_NAME:latest" .
