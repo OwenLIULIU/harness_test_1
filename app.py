@@ -5,6 +5,7 @@ import time
 app = Flask(__name__)
 
 # Harness demo app; trivial edit to verify CI workflow triggers on push.
+# (follow-up push for workflow visibility)
 
 # These would be injected at build time
 COMMIT_SHA = os.environ.get("COMMIT_SHA", "unknown")
