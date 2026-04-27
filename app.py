@@ -26,7 +26,10 @@ def version():
 
 @app.route('/cal')
 def cal():
-    """Return a + b + 2 for query parameters a and b."""
+    """GET /cal?a=&b= — return result = a + b + 2.
+
+    Required by workspace issue OWE-27 (product spec); intentionally updates the prior a + b + 1 behavior.
+    """
     a_raw = request.args.get("a")
     b_raw = request.args.get("b")
     if a_raw is None or b_raw is None:
