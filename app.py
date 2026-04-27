@@ -2,6 +2,8 @@ from flask import Flask, jsonify, request
 import os
 import time
 
+from calculator import add
+
 app = Flask(__name__)
 
 # These would be injected at build time
@@ -26,7 +28,7 @@ def version():
 
 @app.route('/cal')
 def cal():
-    """Return a + b + 1 for query parameters a and b."""
+    """Return a + b + 2 for query parameters a and b."""
     a_raw = request.args.get("a")
     b_raw = request.args.get("b")
     if a_raw is None or b_raw is None:
@@ -36,7 +38,7 @@ def cal():
         b = float(b_raw)
     except ValueError:
         return jsonify({"error": "a and b must be valid numbers"}), 400
-    return jsonify({"a": a, "b": b, "result": a + b + 1})
+    return jsonify({"a": a, "b": b, "result": add(a, b) + 2})
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=8090)
