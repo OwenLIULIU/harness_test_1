@@ -2,8 +2,6 @@ from flask import Flask, jsonify, request
 import os
 import time
 
-from calculator import add
-
 app = Flask(__name__)
 
 # These would be injected at build time
@@ -38,7 +36,7 @@ def cal():
         b = float(b_raw)
     except ValueError:
         return jsonify({"error": "a and b must be valid numbers"}), 400
-    return jsonify({"a": a, "b": b, "result": add(a, b) + 2})
+    return jsonify({"a": a, "b": b, "result": a + b + 2})
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=8090)
