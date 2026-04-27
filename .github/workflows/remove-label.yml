@@ -1,0 +1,30 @@
+name: Strip AI Review Label
+on:
+  pull_request:
+    types: [synchronize]
+
+jobs:
+  remove-label:
+    runs-on: ubuntu-latest
+    permissions:
+      pull-requests: write
+    steps:
+      - name: Remove ai-reviewed label
+        uses: actions/github-script@v6
+        with:
+          script: |
+            try {
+              await github.rest.issues.removeLabel({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: context.issue.number,
+                name: 'ai-reviewed'
+              });
+              console.log('Removed ai-reviewed label');
+            } catch (error) {
+              if (error.status === 404) {
+                console.log('Label not found, nothing to remove.');
+              } else {
+                throw error;
+              }
+            }
