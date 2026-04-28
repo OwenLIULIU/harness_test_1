@@ -74,6 +74,19 @@ def sentry_test():
         os._exit(1)
     return "This should not be reached"
 
+@app.route('/sentry_test_1')
+def sentry_test_1():
+    """Every call reports to Sentry then hard-crashes the process (OWE-29)."""
+    try:
+        raise RuntimeError("sentry_test_1 intentional crash for Sentry")
+    except Exception as e:
+        import sentry_sdk
+        sentry_sdk.capture_exception(e)
+        sentry_sdk.flush(timeout=2.0)
+        import os
+        os._exit(1)
+    return "This should not be reached"
+
 @app.route("/v1/cal")
 def cal_v1():
     """Legacy contract: result = a + b + 1. Current default is GET /cal (v2, a + b + 2)."""
