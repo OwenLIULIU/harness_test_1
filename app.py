@@ -60,32 +60,10 @@ def crash():
         return jsonify({"error": "division by zero caught and reported"}), 500
     return "This should not be reached"
 
-@app.route('/sentry_test')
-def sentry_test():
-    """Explicitly capture an exception and then force a crash."""
-    try:
-        raise RuntimeError("Manual Sentry Test Crash")
-    except Exception as e:
-        import sentry_sdk
-        sentry_sdk.capture_exception(e)
-        sentry_sdk.flush(timeout=2.0)
-        # Force exit to simulate a hard crash
-        import os
-        os._exit(1)
-    return "This should not be reached"
-
 @app.route('/sentry_test_1')
 def sentry_test_1():
-    """Every call reports to Sentry then hard-crashes the process (OWE-29)."""
-    try:
-        raise RuntimeError("sentry_test_1 intentional crash for Sentry")
-    except Exception as e:
-        import sentry_sdk
-        sentry_sdk.capture_exception(e)
-        sentry_sdk.flush(timeout=2.0)
-        import os
-        os._exit(1)
-    return "This should not be reached"
+    """Unrecoverable app error on every call; Sentry records via Flask integration (no process exit)."""
+    raise RuntimeError("sentry_test_1 intentional error for Sentry verification")
 
 @app.route("/v1/cal")
 def cal_v1():

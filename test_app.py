@@ -45,3 +45,9 @@ def test_health(client):
     r = client.get("/health")
     assert r.status_code == 200
     assert r.get_json()["status"] == "ok"
+
+
+def test_sentry_test_1_raises_runtime_error(client):
+    """In TESTING mode the client propagates; production WSGI returns 500 to clients."""
+    with pytest.raises(RuntimeError, match="sentry_test_1"):
+        client.get("/sentry_test_1")
