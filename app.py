@@ -1,6 +1,7 @@
 from flask import Flask, jsonify, request
 import os
 import time
+import uuid
 import sentry_sdk
 from sentry_sdk.integrations.flask import FlaskIntegration
 
@@ -60,29 +61,39 @@ def crash():
         return jsonify({"error": "division by zero caught and reported"}), 500
     return "This should not be reached"
 
-@app.route('/sentry_test_1')
+@app.route("/sentry_test")
+def sentry_test():
+    """Explicitly capture an exception and then force a crash."""
+    try:
+        raise RuntimeError("Manual Sentry Test Crash")
+    except Exception as e:
+        import sentry_sdk
+        sentry_sdk.capture_exception(e)
+        sentry_sdk.flush(timeout=2.0)
+        # Force exit to simulate a hard crash
+        import os
+        os._exit(1)
+    return "This should not be reached"
+
+
+@app.route("/sentry_test_1")
 def sentry_test_1():
     """
-    Sentry verification route (OWE-29). Every request is an intentional failure.
-
-    Returns HTTP 500 with JSON describing the error. When SENTRY_DSN is set,
-    the exception is reported via capture_exception. Does not terminate the
-    worker.
+    Each request sends a Sentry error event with a unique fingerprint so a new
+    Sentry issue is created per API call (grouping is not merged with prior runs).
     """
-    try:
-        raise RuntimeError("sentry_test_1 intentional error for Sentry verification")
-    except RuntimeError as e:
-        sentry_sdk.capture_exception(e)
-        return (
-            jsonify(
-                {
-                    "error": "sentry_test_1",
-                    "message": str(e),
-                    "http_status": 500,
-                }
-            ),
-            500,
+    if not os.environ.get("SENTRY_DSN"):
+        return jsonify(
+            {"error": "SENTRY_DSN is not set; configure it to report to Sentry."}
+        ), 503
+    with sentry_sdk.new_scope() as scope:
+        scope.fingerprint = ["sentry_test_1", str(uuid.uuid4())]
+        sentry_sdk.capture_message(
+            "sentry_test_1: event from GET /sentry_test_1",
+            level="error",
         )
+    sentry_sdk.flush(timeout=2.0)
+    return jsonify({"ok": True, "message": "Sentry event sent"})
 
 @app.route("/v1/cal")
 def cal_v1():
