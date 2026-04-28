@@ -52,7 +52,10 @@ def version():
 @app.route('/crash')
 def crash():
     """Trigger a division by zero to test Sentry exception tracking."""
-    1 / 0
+    denominator = 0
+    if denominator == 0:
+        return jsonify({"error": "division by zero prevented by SRE Agent fix"}), 400
+    1 / denominator
     return "This should not be reached"
 
 @app.route("/v1/cal")
