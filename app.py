@@ -75,7 +75,6 @@ def sentry_test():
         os._exit(1)
     return "This should not be reached"
 
-
 @app.route("/sentry_test_1")
 def sentry_test_1():
     """
