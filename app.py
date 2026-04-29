@@ -60,6 +60,30 @@ def crash():
         return jsonify({"error": "division by zero caught and reported"}), 500
     return "This should not be reached"
 
+@app.route('/sentry_test_1')
+def sentry_test_1():
+    """
+    Sentry verification route (OWE-29). Every request is an intentional failure.
+
+    Returns HTTP 500 with JSON describing the error. When SENTRY_DSN is set,
+    the exception is reported via capture_exception. Does not terminate the
+    worker.
+    """
+    try:
+        raise RuntimeError("sentry_test_1 intentional error for Sentry verification")
+    except RuntimeError as e:
+        sentry_sdk.capture_exception(e)
+        return (
+            jsonify(
+                {
+                    "error": "sentry_test_1",
+                    "message": str(e),
+                    "http_status": 500,
+                }
+            ),
+            500,
+        )
+
 @app.route("/v1/cal")
 def cal_v1():
     """Legacy contract: result = a + b + 1. Current default is GET /cal (v2, a + b + 2)."""

@@ -45,3 +45,13 @@ def test_health(client):
     r = client.get("/health")
     assert r.status_code == 200
     assert r.get_json()["status"] == "ok"
+
+
+def test_sentry_test_1_returns_500_json(client):
+    """Uses the `client` fixture (defined above) to assert production-like HTTP 500."""
+    r = client.get("/sentry_test_1")
+    assert r.status_code == 500
+    data = r.get_json()
+    assert data["error"] == "sentry_test_1"
+    assert "sentry_test_1" in data["message"]
+    assert data["http_status"] == 500
