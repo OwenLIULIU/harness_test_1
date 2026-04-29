@@ -1,7 +1,10 @@
 """HTTP tests for app routes."""
 
+from unittest.mock import patch
+
 import pytest
 
+import app as app_module
 from app import app
 
 
@@ -45,3 +48,25 @@ def test_health(client):
     r = client.get("/health")
     assert r.status_code == 200
     assert r.get_json()["status"] == "ok"
+
+
+def test_sentry_test_1_skips_sentry_without_dsn(client, monkeypatch):
+    monkeypatch.setattr(app_module, "sentry_dsn", None)
+    r = client.get("/sentry_test_1")
+    assert r.status_code == 200
+    data = r.get_json()
+    assert data["ok"] is True
+    assert data["sent"] is False
+    assert "reason" in data
+
+
+def test_sentry_test_1_sends_with_dsn(client, monkeypatch):
+    monkeypatch.setattr(app_module, "sentry_dsn", "https://example@o1.ingest.sentry.io/1")
+    with patch("sentry_sdk.capture_message") as cap_m, patch("sentry_sdk.flush"):
+        r = client.get("/sentry_test_1")
+    assert r.status_code == 200
+    data = r.get_json()
+    assert data["ok"] is True
+    assert data["sent"] is True
+    assert "event_id" in data
+    assert cap_m.call_count == 1

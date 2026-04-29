@@ -1,6 +1,7 @@
 from flask import Flask, jsonify, request
 import os
 import time
+import uuid
 import sentry_sdk
 from sentry_sdk.integrations.flask import FlaskIntegration
 
@@ -73,6 +74,43 @@ def sentry_test():
         import os
         os._exit(1)
     return "This should not be reached"
+
+
+@app.route("/sentry_test_1")
+def sentry_test_1():
+    """
+    Send one Sentry event per request. A unique fingerprint is used so each
+    call groups as a new issue in Sentry (not merged with prior invocations).
+    """
+    if not sentry_dsn:
+        return (
+            jsonify(
+                {
+                    "ok": True,
+                    "sent": False,
+                    "reason": "SENTRY_DSN is not set; Sentry client was not initialized",
+                }
+            ),
+            200,
+        )
+
+    event_id = str(uuid.uuid4())
+    with sentry_sdk.new_scope() as scope:
+        scope.fingerprint = [event_id]
+        scope.set_tag("endpoint", "sentry_test_1")
+        sentry_sdk.capture_message(
+            f"sentry_test_1 manual issue ({event_id})",
+            level="error",
+        )
+    sentry_sdk.flush(timeout=2.0)
+    return jsonify(
+        {
+            "ok": True,
+            "sent": True,
+            "event_id": event_id,
+        }
+    )
+
 
 @app.route("/v1/cal")
 def cal_v1():
