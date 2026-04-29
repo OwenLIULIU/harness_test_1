@@ -56,23 +56,8 @@ def crash():
     try:
         1 / 0
     except ZeroDivisionError as e:
-        import sentry_sdk
         sentry_sdk.capture_exception(e)
         return jsonify({"error": "division by zero caught and reported"}), 500
-    return "This should not be reached"
-
-@app.route("/sentry_test")
-def sentry_test():
-    """Explicitly capture an exception and then force a crash."""
-    try:
-        raise RuntimeError("Manual Sentry Test Crash")
-    except Exception as e:
-        import sentry_sdk
-        sentry_sdk.capture_exception(e)
-        sentry_sdk.flush(timeout=2.0)
-        # Force exit to simulate a hard crash
-        import os
-        os._exit(1)
     return "This should not be reached"
 
 @app.route("/sentry_test_1")
